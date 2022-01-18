@@ -1,9 +1,9 @@
-import React from "react";
-import PropTypes from 'prop-types';
 
+import React from "react";
+import PropTypes from "prop-types";
+import { useDispatch, useSelector } from "react-redux";
+import { updateTaskState } from "../lib/store";
 import Task from "./Task";
-import {connect} from 'react-redux';
-import { archiveTask, pinTask } from "../lib/redux";
 
 export function PureTaskList ({loading, tasks, onPinTask, onArchiveTask}){
     const events = {
@@ -18,7 +18,7 @@ export function PureTaskList ({loading, tasks, onPinTask, onArchiveTask}){
                 <span>Loading</span> <span>cool</span> <span>static</span>
             </span>
         </div>
-    )
+    );
 
     if(loading){
         return(
@@ -31,7 +31,7 @@ export function PureTaskList ({loading, tasks, onPinTask, onArchiveTask}){
                 {LoadingRow}
             </div>
         );
-    }
+    };
 
     if(tasks.length === 0){
         return (<div className="list-items">
@@ -41,12 +41,12 @@ export function PureTaskList ({loading, tasks, onPinTask, onArchiveTask}){
                 <div className="subtitle-message">Sit back and relax</div>
             </div>
         </div>)
-    }
+    };
 
     const tasksInOrder = [
         ...tasks.filter(t => t.state === 'TASK_PINNED'),
         ...tasks.filter(t => t.state !== 'TASK_PINNED')
-    ]
+    ];
 
     return(
         <div className="list-items">
@@ -54,7 +54,7 @@ export function PureTaskList ({loading, tasks, onPinTask, onArchiveTask}){
                 <Task key={task.id} task={task} {...events} />
             ))}
         </div>
-    )
+    );
 }
 
 PureTaskList.propTypes = {
@@ -72,12 +72,27 @@ PureTaskList.defaultProps = {
     loading: false,
 };
 
-export default connect(
-    ({tasks}) => ({
-        tasks: tasks.filter(t => t.state ==='TASK_INBOX' || t.state === "TASK_PINNED"),
-    }),
-    dispatch => ({
-        onArchiveTask: id => dispatch(archiveTask(id)),
-        onPinTask : id => dispatch(pinTask(id))
-    })
-)(PureTaskList);
+export function TaskList(){
+    const tasks = useSelector((state) => state.tasks);
+    const dispatch = useDispatch();
+
+    const pinTask = (value) => {
+        dispatch(updateTaskState({id : value, newTaskState: "TASK_PINNED"}))
+    }
+
+    const archiveTask = (value) => {
+        dispatch(updateTaskState({id : value, newTaskState: "TASK_ARCHIVED"}))
+    }
+
+    const filteredTasks = tasks.filter(
+        (t) => t.state === "TASK_INBOX" || t.state === "TASK_PINNED"
+      );
+
+    return (
+    <PureTaskList
+        tasks={filteredTasks}
+        onPinTask={(task) => pinTask(task)}
+        onArchiveTask={(task) => archiveTask(task)}
+    />
+    );
+}
